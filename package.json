@@ -1,0 +1,27 @@
+{
+  "name": "pokerhand",
+  "version": "1.0.0",
+  "description": "provides a rank for a poker hand, potentially including wildcards",
+  "main": "src/app.js",
+  "scripts": {
+    "test": "node test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gsdriver/pokerhand"
+  },
+  "keywords": [
+    "poker",
+    "games"
+  ],
+  "directories": {
+    "doc": ".",
+    "test": "test",
+    "lib": "src"
+  },
+  "author": "Garrett Vargas <gsdriver@live.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gsdriver/pokerhand/issues"
+  }
+}

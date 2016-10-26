@@ -81,7 +81,7 @@ module.exports = {
 
 function MapOptions(cards, options)
 {
-    const playerOptions = {aceCanBeLow:false, wildCards:[], cardsToEvaluate:5, dontAllow:[]};    
+    const playerOptions = {aceCanBeLow:false, wildCards:["JOKER"], cardsToEvaluate:5, dontAllow:[]};    
 
     if (options)
     {
@@ -114,21 +114,25 @@ function MapOptions(cards, options)
 
             for (i = 0; i < options.wildCards.length; i++)
             {
-                exactCard = GetRankAndSuit(options.wildCards[i]);
-                if (exactCard)
+                // Ignore Joker - we already put that in
+                if (options.wildCards[i].toUpperCase() != "JOKER")
                 {
-                    playerOptions.wildCards.push(options.wildCards[i].toUpperCase());
-                }
-                else
-                {
-                    // Not an exact card, so it should be just a rank
-                    value = GetRank(options.wildCards[i]);
-                    if (value > 0)
+                    exactCard = GetRankAndSuit(options.wildCards[i]);
+                    if (exactCard)
                     {
-                        playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + "C");
-                        playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + "D");
-                        playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + "H");
-                        playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + "S");
+                        playerOptions.wildCards.push(options.wildCards[i].toUpperCase());
+                    }
+                    else
+                    {
+                        // Not an exact card, so it should be just a rank
+                        value = GetRank(options.wildCards[i]);
+                        if (value > 0)
+                        {
+                            playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + "C");
+                            playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + "D");
+                            playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + "H");
+                            playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + "S");
+                        }
                     }
                 }
             }

@@ -69,6 +69,7 @@ RunTest("Junk hand", ["2d", "6S", "Jh", "qC", "10h"], null, "nothing");
 
 // Wild card tests
 RunTest("Four of a kind, twos are wild", ["4C", "2d", "4S", "4h", "10S"], {wildCards:["2"]}, "4ofakind");
+RunTest("Four of a kind, with a joker", ["4C", "2d", "4S", "4h", "joker"], null, "4ofakind");
 RunTest("Straight Flush, one-eyed Jacks wild", ["2D", "JH", "4D", "6D", "JS"], {wildCards:["JH", "Js"]}, "straightflush");
 RunTest("Ace-high straight, 4s are wild", ["4c", "As", "Qd", "Jc", "Ks"], {wildCards:["4"]}, "straight");
 RunTest("Full house, 3s and 4s are wild", ["2C", "2D", "3s", "8c", "8d"], {wildCards:["3", "4"]}, "fullhouse");
