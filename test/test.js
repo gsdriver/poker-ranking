@@ -77,6 +77,8 @@ RunTest("Pair, Kings are wild", ["3d", "9s", "5c", "Qh", "Ks"], {wildCards:["K"]
 // 3-card hands
 RunTest("3 card trips", ["3S", "3d", "3c"], null, "3ofakind");
 RunTest("3 card straight", ["4d", "6h", "5s"], null, "straight");
+RunTest("3 card straight - don't allow straight", ["4d", "6h", "5s"], {dontAllow:["straight", "flush"]}, "nothing");
+RunTest("3 card trips - don't allow flush", ["3d", "3h", "3s"], {dontAllow:["straight", "flush"]}, "3ofakind");
 
 // 7-card hands
 RunTest("Two pair", ["2d", "5h", "9S", "2c", "9d", "5c", "jh"], null, "2pair");

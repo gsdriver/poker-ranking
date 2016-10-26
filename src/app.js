@@ -25,47 +25,47 @@ module.exports = {
             return "5ofakind";
         }
         // Royal flush
-        if (isFlush && (straightHiCard == 14))
+        if (isFlush && (straightHiCard == 14) && (playerOptions.dontAllow.indexOf("royalflush") < 0))
         {
             return "royalflush";    
         }
         // Straight flush
-        if (isFlush && (straightHiCard > 0))
+        if (isFlush && (straightHiCard > 0) && (playerOptions.dontAllow.indexOf("straightflush") < 0))
         {
             return "straightflush";
         }
         // 4-of-a-kind
-        if (maxLikeCards == 4)
+        if ((maxLikeCards == 4) && (playerOptions.dontAllow.indexOf("4ofakind") < 0))
         {
             return "4ofakind";
         }
+        // Full House
+        if (IsHandFullHouse(hand, playerOptions) && (playerOptions.dontAllow.indexOf("fullhouse") < 0))
+        {
+            return "fullhouse";
+        }
         // Flush
-        if (isFlush)
+        if (isFlush && (playerOptions.dontAllow.indexOf("flush") < 0))
         {
             return "flush";
         }
         // Straight
-        if (straightHiCard > 0)
+        if ((straightHiCard > 0) && (playerOptions.dontAllow.indexOf("straight") < 0))
         {
             return "straight";
         }
-        // Full House
-        if (IsHandFullHouse(hand, playerOptions))
-        {
-            return "fullhouse";
-        }
         // 3-of-a-kind
-        if (maxLikeCards == 3)
+        if ((maxLikeCards == 3) && (playerOptions.dontAllow.indexOf("3ofakind") < 0))
         {
             return "3ofakind";
         }
         // 2-pair
-        if (IsHandTwoPair(hand, playerOptions))
+        if (IsHandTwoPair(hand, playerOptions) && (playerOptions.dontAllow.indexOf("2pair") < 0))
         {
             return "2pair";
         }
         // 1-pair
-        if (maxLikeCards == 2)
+        if ((maxLikeCards == 2) && (playerOptions.dontAllow.indexOf("pair") < 0))
         {
             return "pair";
         }
@@ -81,7 +81,7 @@ module.exports = {
 
 function MapOptions(cards, options)
 {
-    const playerOptions = {aceCanBeLow:false, wildCards:[], cardsToEvaluate:5};    
+    const playerOptions = {aceCanBeLow:false, wildCards:[], cardsToEvaluate:5, dontAllow:[]};    
 
     if (options)
     {
@@ -93,7 +93,18 @@ function MapOptions(cards, options)
         {
             playerOptions.cardsToEvaluate = options.cardsToEvaluate;
         }
-        
+        if (options.hasOwnProperty("dontAllow"))
+        {
+            var i;
+
+            // These are the hands we don't allow (so don't consider these hands when
+            // you are doing an evaluation)
+            for (i = 0; i < options.dontAllow.length; i++)
+            {
+                playerOptions.dontAllow.push(options.dontAllow[i]);
+            }
+        }
+
         // Now map any wild cards - the array passed in can be a single rank (e.g. "2" or "K")
         // or can be specific cards (e.g. "JH", "JD" for red jacks)
         // Either way, we will expand this to an array of individual cards
