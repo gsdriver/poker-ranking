@@ -53,7 +53,6 @@ RunTest("A-5 Low Straight", ["5C", "2d", "AC", "3S", "4H"], {aceCanBeLow: true},
 
 // Four of a kind
 RunTest("Four of a kind", ["4C", "5D", "4D", "4H", "4S"], null, "4ofakind");
-RunTest("Four of a kind, twos are wild", ["4C", "2d", "4S", "4h", "10S"], {wildCards:["2"]}, "4ofakind");
 RunTest("Three of a kind", ["Ks", "kD", "KC", "4c", "2h"], null, "3ofakind");
 
 // Full house
@@ -67,6 +66,20 @@ RunTest("Pair of queens", ["Qc", "10S", "9c", "8d", "Qh"], null, "pair");
 
 // Junk hand
 RunTest("Junk hand", ["2d", "6S", "Jh", "qC", "10h"], null, "nothing");
+
+// Wild card tests
+RunTest("Four of a kind, twos are wild", ["4C", "2d", "4S", "4h", "10S"], {wildCards:["2"]}, "4ofakind");
+RunTest("Straight Flush, one-eyed Jacks wild", ["2D", "JH", "4D", "6D", "JS"], {wildCards:["JH", "Js"]}, "straightflush");
+RunTest("Ace-high straight, 4s are wild", ["4c", "As", "Qd", "Jc", "Ks"], {wildCards:["4"]}, "straight");
+RunTest("Full house, 3s and 4s are wild", ["2C", "2D", "3s", "8c", "8d"], {wildCards:["3", "4"]}, "fullhouse");
+RunTest("Pair, Kings are wild", ["3d", "9s", "5c", "Qh", "Ks"], {wildCards:["K"]}, "pair");
+
+// 3-card hands
+RunTest("3 card trips", ["3S", "3d", "3c"], null, "3ofakind");
+RunTest("3 card straight", ["4d", "6h", "5s"], null, "straight");
+
+// 7-card hands
+RunTest("Two pair", ["2d", "5h", "9S", "2c", "9d", "5c", "jh"], null, "2pair");
 
 // Final summary
 console.log("\r\nRan " + (succeeded + failed) + " tests; " + succeeded + " passed and " + failed + " failed");

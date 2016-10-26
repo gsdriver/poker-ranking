@@ -106,7 +106,7 @@ function MapOptions(cards, options)
                 exactCard = GetRankAndSuit(options.wildCards[i]);
                 if (exactCard)
                 {
-                    playerOptoins.wildCards.push(options.wildCards[i].toUpperCase());
+                    playerOptions.wildCards.push(options.wildCards[i].toUpperCase());
                 }
                 else
                 {
@@ -284,8 +284,8 @@ function GetStraightHighCard(hand, options)
 {
     var hiCard = 0;
     var i, curRun = 0;
+    var wildRun = hand.wildCards;
 
-    // BUGBUG - would need to see how wildcards fit in   
     for (i = 0; i < hand.rank.length; i++)
     {
         if (hand.rank[i])
@@ -295,19 +295,30 @@ function GetStraightHighCard(hand, options)
         }
         else
         {
-            // The current run is over
-            if (curRun >= options.cardsToEvaluate)
+            // If there are wild cards, they can be used here
+            if ((curRun > 0) && (wildRun > 0))
             {
-                // And it's a straight!
-                hiCard = i;
+                wildRun--;
+                curRun++;
             }
+            else
+            {
+                // The current run is over
+                if (curRun >= options.cardsToEvaluate)
+                {
+                    // And it's a straight!
+                    hiCard = i;
+                }
 
-            curRun = 0;
+                curRun = 0;
+                wildRun = hand.wildCards;
+            }
         }
     }
 
-    // If the run ended in Ace, we should note it
-    if (curRun >= options.cardsToEvaluate)
+    // It's possible that we have an Ace-high straight, or that
+    // wild cards could be used to complete an Ace-high straight
+    if ((curRun + wildRun) >= options.cardsToEvaluate)
     {
         // Ace-high striaght!
         hiCard = hand.rank.length;
