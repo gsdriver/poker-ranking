@@ -1,4 +1,5 @@
 gulpfile.js
 .eslintrc.json
-build
 .idea
+node_modules
+lint-report.html
