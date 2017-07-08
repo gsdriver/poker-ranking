@@ -3,13 +3,13 @@ Evaluates a poker hand - can include options such as wild cards or whether Ace c
 
 # Usage
 
-The exposed function from this library is `EvaluateHand` which will return a string saying what the hand represents
+The exposed function from this library is `evaluateHand` which will return a string saying what the hand represents
 
 ```
-EvaluateHand(cards options)
+evaluateHand(cards options)
 ```
 
-The arguments to  `EvaluateHand` are:
+The arguments to  `evaluateHand` are:
 
  * cards - an array of strings representing the hand.  Strings should be a 2 or 3 character string representing the rank 
             and suit (for example, "10S" for 10 of spades or "QD" for Queen of diamonds).  The string can also be

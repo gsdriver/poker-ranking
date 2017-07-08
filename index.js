@@ -2,12 +2,14 @@
 // Main routine to evaluation a poker hand
 //
 
+const suits = ['C', 'D', 'H', 'S'];
+const ranks = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
 module.exports = {
   // Evaluate a hand
   evaluateHand: function(cards, options) {
     const playerOptions = mapOptions(cards, options);
     const hand = createHandArray(cards, playerOptions);
-
     if (!hand) {
       return 'error';
     }
@@ -77,13 +79,7 @@ function mapOptions(cards, options) {
       playerOptions.cardsToEvaluate = options.cardsToEvaluate;
     }
     if (options.hasOwnProperty('dontAllow')) {
-      let i;
-
-      // These are the hands we don't allow (so don't consider these hands when
-      // you are doing an evaluation)
-      for (i = 0; i < options.dontAllow.length; i++) {
-        playerOptions.dontAllow.push(options.dontAllow[i]);
-      }
+      playerOptions.dontAllow = options.dontAllow;
     }
 
     // Now map any wild cards - the array passed in can be a single rank (e.g. '2' or 'K')
@@ -96,18 +92,16 @@ function mapOptions(cards, options) {
 
       for (i = 0; i < options.wildCards.length; i++) {
         // Ignore Joker - we already put that in
-        if (options.wildCards[i].toUpperCase() !== 'JOKER') {
-          exactCard = getRankAndSuit(options.wildCards[i]);
+        const wildCard = options.wildCards[i].toUpperCase();
+        if (wildCard !== 'JOKER') {
+          exactCard = getRankAndSuit(wildCard);
           if (exactCard) {
-            playerOptions.wildCards.push(options.wildCards[i].toUpperCase());
+            playerOptions.wildCards.push(wildCard);
           } else {
             // Not an exact card, so it should be just a rank
-            value = getRank(options.wildCards[i]);
+            value = getRank(wildCard);
             if (value > 0) {
-              playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + 'C');
-              playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + 'D');
-              playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + 'H');
-              playerOptions.wildCards.push(options.wildCards[i].toUpperCase() + 'S');
+              suits.map((suit) => playerOptions.wildCards.push(wildCard + suit));
             }
           }
         }
@@ -128,17 +122,16 @@ function mapOptions(cards, options) {
 // Given a string (e.g. '10' or 'J'), this function returns the rank, which 
 // is a number from 1-14.  A return value of 0 indicates an error
 function getRank(rankString) {
-  const rankMapping = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-  let rank = 0;
+  let rank;
 
-  if (rankString == '10') {
+  if (rankString === '10') {
     rank = 10;
-  } else if (rankString.length == 1) {
+  } else if (rankString.length === 1) {
     // Rank is 2-9, J, Q, K, or A
-    rank = rankMapping.indexOf(rankString.toUpperCase()) + 1;
+    rank = ranks.indexOf(rankString.toUpperCase()) + 1;
     if (rank < 2) {
       // Nope, bad input
-      rank = 0;
+      rank = undefined;
     }
   }
 
@@ -150,29 +143,28 @@ function getRank(rankString) {
 function getRankAndSuit(card) {
   const result = {rank: 0, suit: 0};
   let suitString;
-  const suitMapping = ['C', 'D', 'H', 'S'];
 
-  if (card.substring(0, 2) == '10') {
+  if (card.substring(0, 2) === '10') {
     result.rank = 10;
     suitString = card.substring(2, card.length);
-  } else if (card.length == 2) {
+  } else if (card.length === 2) {
     result.rank = getRank(card.substring(0, 1));
     if (result.rank < 2) {
       // Nope, bad input
-      return null;
+      return undefined;
     }
 
     suitString = card.substring(1, 2);
   } else {
     // Bad input
-    return null;
+    return undefined;
   }
 
   // OK, we set the rank, now find a suit
-  result.suit = suitMapping.indexOf(suitString.toUpperCase());
+  result.suit = suits.indexOf(suitString.toUpperCase());
   if (result.suit < 0) {
     // Sorry, bad suit
-    return null;
+    return undefined;
   }
 
   // OK, return the card
@@ -205,7 +197,6 @@ function createHandArray(cards, options) {
         return null;
       }
 
-      // BUGBUG - we should check that this isn't a duplicate card
       result.suits[card.suit]++;
       result.rank[card.rank - 1]++;
       if ((card.rank == 14) && options.aceCanBeLow) {
@@ -221,24 +212,12 @@ function createHandArray(cards, options) {
 
 // Determines whether a hand is a flush or not
 function isHandFlush(hand, options) {
-  let i = 0;
-  let maxCardsInSuit = 0;
-
-  for (i = 0; i < hand.suits.length; i++) {
-    if (hand.suits[i] > maxCardsInSuit) {
-      maxCardsInSuit = hand.suits[i];
-    }
-  }
-
-  // Add in wildcards
-  maxCardsInSuit += hand.wildCards;
-  return (maxCardsInSuit >= options.cardsToEvaluate);
+  return ((Math.max.apply(null, hand.suits) + hand.wildCards) >= options.cardsToEvaluate);
 }
 
-// Determines whether a hand is a striaght or not, returning
-// the high card in that striaght.  If the hand is not a striaght,
+// Determines whether a hand is a straight or not, returning
+// the high card in that straight.  If the hand is not a straight,
 // then this function returns 0
-
 function getStraightHighCard(hand, options) {
   let hiCard = 0;
   let i;
@@ -280,18 +259,8 @@ function getStraightHighCard(hand, options) {
 
 // Returns the maximum number of like cards (pair, three of a kind, etc)
 function getMaxLikeCards(hand, options) {
-  let i;
-  let maxLike = 0;
+  let maxLike = Math.max.apply(null, hand.rank) + hand.wildCards;
 
-  // Go thru and see what the maximum number of like cards is
-  for (i = 0; i < hand.rank.length; i++) {
-    if (hand.rank[i] > maxLike) {
-      maxLike = hand.rank[i];
-    }
-  }
-
-  // Add in wild cards
-  maxLike += hand.wildCards;
   if (maxLike > hand.cardsToEvaluate) {
     maxLike = hand.cardsToEvaluate;
   }
@@ -308,8 +277,7 @@ function isHandFullHouse(hand, options) {
   // OK, we need 3 and 2 - start by checking if we have a three in the array
   if (hand.rank.indexOf(3) >= 0) {
     // OK, we have three of a kind (natural) - now look for a pair
-    // No need to look for wild cards; they ain't got any if we got this
-    // far as we already checked for 4-of-a-kind which beats Full House
+    // No need to check for wild cards as they would have 4-of-a-kind instead
     if (hand.rank.indexOf(2) >= 0) {
       // Natural full house!
       return true;
@@ -323,21 +291,13 @@ function isHandFullHouse(hand, options) {
     }
   }
 
-  // Guess they ain't got it
   return false;
 }
 
 function isHandTwoPair(hand, options) {
-  // No need to check for wild cards - because any wild cards would make this a better hand
-  // than just two pair
-  let i;
-  let pair = 0;
-
-  for (i = 0; i < hand.rank.length; i++) {
-    if (hand.rank[i] === 2) {
-        pair++;
-    }
-  }
-
-  return (pair >= 2);
+  // No need to check for wild cards as
+  // any wild cards would make this a better hand than just two pair
+  return (hand.rank.reduce((sum, value) => {
+    return (value === 2) ? (sum + 1) : sum;
+  }, 0) >= 2);
 }
