@@ -2,7 +2,7 @@
   "name": "poker-ranking",
   "version": "1.0.0",
   "description": "provides a rank for a poker hand, potentially including wildcards",
-  "main": "src/app.js",
+  "main": "index.js",
   "scripts": {
     "test": "node test/test.js"
   },
