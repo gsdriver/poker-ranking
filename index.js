@@ -56,6 +56,15 @@ module.exports = {
     }
     // 1-pair
     if ((maxLikeCards === 2) && (playerOptions.dontAllow.indexOf('pair') < 0)) {
+      // Was a minimum pair set?
+      if (playerOptions.minPair) {
+        // What is the pair?
+        const pairCard = getPairCard(hand);
+        if (pairCard >= (ranks.indexOf(playerOptions.minPair) + 1)) {
+          return 'minpair';
+        }
+      }
+
       return 'pair';
     }
 
@@ -80,6 +89,12 @@ function mapOptions(cards, options) {
     }
     if (options.hasOwnProperty('dontAllow')) {
       playerOptions.dontAllow = options.dontAllow;
+    }
+    if (options.hasOwnProperty('minPair')) {
+      // Only keep if it's valid
+      if (ranks.indexOf(options.minPair.toUpperCase()) > -1) {
+        playerOptions.minPair = options.minPair.toUpperCase();
+      }
     }
 
     // Now map any wild cards - the array passed in can be a single rank (e.g. '2' or 'K')
@@ -300,4 +315,24 @@ function isHandTwoPair(hand, options) {
   return (hand.rank.reduce((sum, value) => {
     return (value === 2) ? (sum + 1) : sum;
   }, 0) >= 2);
+}
+
+// Function assumes there is a single pair
+function getPairCard(hand) {
+  const card = hand.rank.indexOf(2, 1);
+
+  if (card > -1) {
+    return (card + 1);
+  }
+
+  // OK, so there's a wild card - return the highest card in array
+  let i;
+  for (i = hand.rank.length - 1; i--; i > 0) {
+    if (hand.rank[i]) {
+      return i;
+    }
+  }
+
+  // This shouldn't happen
+  return undefined;
 }

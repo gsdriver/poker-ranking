@@ -72,6 +72,11 @@ runTest('Ace-high straight, 10s are wild', ['10c', 'As', 'Qd', 'Jc', 'Ks'], {wil
 runTest('Full house, 3s and 4s are wild', ['2C', '2D', '3s', '8c', '8d'], {wildCards: ['3', '4']}, 'fullhouse');
 runTest('Pair, Kings are wild', ['3d', '9s', '5c', 'Qh', 'Ks'], {wildCards: ['K']}, 'pair');
 
+// Min pair tests
+runTest('Jacks or better', ['3d', 'jd', '9S', '2c', '8d', '5c', 'jh'], {minPair: 'j'}, 'minpair');
+runTest('10s or better, Kings are wild', ['3d', '9s', '5c', 'Qh', 'Ks'], {wildCards: ['K'], minPair: '10'}, 'minpair');
+runTest('Jacks or better, pair of 10s', ['3d', '10d', '10S', '2c', '9d'], {minPair: 'j'}, 'pair');
+
 // 3-card hands
 runTest('3 card trips', ['3S', '3d', '3c'], null, '3ofakind');
 runTest('3 card straight', ['4d', '6h', '5s'], null, 'straight');
