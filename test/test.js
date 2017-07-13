@@ -33,6 +33,13 @@ function runTest(testName, cards, options, expectedResult) {
   if (result == expectedResult) {
     console.log('SUCCESS: ' + testName + ' returned ' + result);
     succeeded++;
+
+    // getDetails test
+    if (!options) {
+      const details = lib.evaluateHand(cards, {getDetails: true});
+      console.log(JSON.stringify(details));
+
+    }
   } else {
     console.log('FAIL: ' + testName + ' returned ' + result + ' rather than ' + expectedResult);
     failed++;

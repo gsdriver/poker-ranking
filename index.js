@@ -10,66 +10,76 @@ module.exports = {
   evaluateHand: function(cards, options) {
     const playerOptions = mapOptions(cards, options);
     const hand = createHandArray(cards, playerOptions);
+    let matchedCards;
+    let match;
+
     if (!hand) {
-      return 'error';
-    }
+      match = 'error';
+    } else {
+      const flush = isHandFlush(hand, playerOptions);
+      const straightHiCard = getStraightHighCard(hand, playerOptions);
+      const maxLikeCards = getMaxLikeCards(hand, playerOptions);
 
-    const isFlush = isHandFlush(hand, playerOptions);
-    const straightHiCard = getStraightHighCard(hand, playerOptions);
-    const maxLikeCards = getMaxLikeCards(hand, playerOptions);
+      // OK, let's see what we got - highest hand, 5-of-a-kind (with wild cards)
+      if (maxLikeCards.maxLike === 5) {
+        match = '5ofakind';
+        matchedCards = maxLikeCards.cards;
+      } else if (flush.isFlush && (straightHiCard.hiCard === 14) && (playerOptions.dontAllow.indexOf('royalflush') < 0)) {
+        match = 'royalflush';
+        matchedCards = flush.cards;
+      } else if (flush.isFlush && (straightHiCard.hiCard > 0) && (playerOptions.dontAllow.indexOf('straightflush') < 0)) {
+        match = 'straightflush';
+        matchedCards = flush.cards;
+      } else if ((maxLikeCards.maxLike === 4) && (playerOptions.dontAllow.indexOf('4ofakind') < 0)) {
+        match = '4ofakind';
+        matchedCards = maxLikeCards.cards;
+      } else {
+        const fullHouse = getFullHouse(hand, playerOptions);
+        if (fullHouse.isFullHouse && (playerOptions.dontAllow.indexOf('fullhouse') < 0)) {
+          match = 'fullhouse';
+          matchedCards = fullHouse.cards;
+        } else if (flush.isFlush && (playerOptions.dontAllow.indexOf('flush') < 0)) {
+          match = 'flush';
+          matchedCards = flush.cards;
+        } else if ((straightHiCard.hiCard > 0) && (playerOptions.dontAllow.indexOf('straight') < 0)) {
+          match = 'straight';
+          matchedCards = straightHiCard.cards;
+        } else if ((maxLikeCards.maxLike === 3) && (playerOptions.dontAllow.indexOf('3ofakind') < 0)) {
+          match = '3ofakind';
+          matchedCards = maxLikeCards.cards;
+        } else {
+          const twoPair = getTwoPair(hand, playerOptions);
+          if (twoPair.isTwoPair && (playerOptions.dontAllow.indexOf('2pair') < 0)) {
+            match = '2pair';
+            matchedCards = twoPair.cards;
+          } else if ((maxLikeCards.maxLike === 2) && (playerOptions.dontAllow.indexOf('pair') < 0)) {
+            // Was a minimum pair set?
+            if (playerOptions.minPair) {
+              // What is the pair?
+              const pairCard = getPairCard(hand);
+              if (pairCard >= (ranks.indexOf(playerOptions.minPair) + 1)) {
+                match = 'minpair';
+              }
+            }
 
-    // OK, let's see what we got - highest hand, 5-of-a-kind (with wild cards)
-    if (maxLikeCards === 5) {
-      return '5ofakind';
-    }
-    // Royal flush
-    if (isFlush && (straightHiCard === 14) && (playerOptions.dontAllow.indexOf('royalflush') < 0)) {
-      return 'royalflush';
-    }
-    // Straight flush
-    if (isFlush && (straightHiCard > 0) && (playerOptions.dontAllow.indexOf('straightflush') < 0)) {
-      return 'straightflush';
-    }
-    // 4-of-a-kind
-    if ((maxLikeCards === 4) && (playerOptions.dontAllow.indexOf('4ofakind') < 0)) {
-      return '4ofakind';
-    }
-    // Full House
-    if (isHandFullHouse(hand, playerOptions) && (playerOptions.dontAllow.indexOf('fullhouse') < 0)) {
-      return 'fullhouse';
-    }
-    // Flush
-    if (isFlush && (playerOptions.dontAllow.indexOf('flush') < 0)) {
-      return 'flush';
-    }
-    // Straight
-    if ((straightHiCard > 0) && (playerOptions.dontAllow.indexOf('straight') < 0)) {
-      return 'straight';
-    }
-    // 3-of-a-kind
-    if ((maxLikeCards === 3) && (playerOptions.dontAllow.indexOf('3ofakind') < 0)) {
-      return '3ofakind';
-    }
-    // 2-pair
-    if (isHandTwoPair(hand, playerOptions) && (playerOptions.dontAllow.indexOf('2pair') < 0)) {
-      return '2pair';
-    }
-    // 1-pair
-    if ((maxLikeCards === 2) && (playerOptions.dontAllow.indexOf('pair') < 0)) {
-      // Was a minimum pair set?
-      if (playerOptions.minPair) {
-        // What is the pair?
-        const pairCard = getPairCard(hand);
-        if (pairCard >= (ranks.indexOf(playerOptions.minPair) + 1)) {
-          return 'minpair';
+            if (!match) {
+              match = 'pair';
+            }
+            matchedCards = maxLikeCards.cards;
+          } else {
+            // Nothing - matched cards remains undefined
+            match = 'nothing';
+          }
         }
       }
-
-      return 'pair';
     }
 
-    // Nothing
-    return 'nothing';
+    if (playerOptions.getDetails) {
+      // If a callback is provided, return the matched cards
+      return {match: match, cards: matchedCards};
+    } else {
+      return match;
+    }
   },
 };
 
@@ -89,6 +99,9 @@ function mapOptions(cards, options) {
     }
     if (options.hasOwnProperty('dontAllow')) {
       playerOptions.dontAllow = options.dontAllow;
+    }
+    if (options.hasOwnProperty('getDetails')) {
+      playerOptions.getDetails = options.getDetails;
     }
     if (options.hasOwnProperty('minPair')) {
       // Only keep if it's valid
@@ -222,12 +235,32 @@ function createHandArray(cards, options) {
   }
 
   // OK, let's do it
+  result.cards = cards;
   return result;
 }
 
 // Determines whether a hand is a flush or not
 function isHandFlush(hand, options) {
-  return ((Math.max.apply(null, hand.suits) + hand.wildCards) >= options.cardsToEvaluate);
+  const result = {};
+
+  if ((Math.max.apply(null, hand.suits) + hand.wildCards) >= options.cardsToEvaluate) {
+    // Return the cards that make the flush if requested
+    result.isFlush = true;
+    if (options.getDetails) {
+      // Return value needs to be the matching cards
+      const cards = [];
+
+      // We would suggest starting with wild cards
+      getWildCards(cards, hand, options);
+      getLikeSuit(cards, hand, options, Math.max.apply(null, hand.suits));
+      result.cards = cards;
+    }
+  } else {
+    // Not a flush
+    result.isFlush = false;
+  }
+
+  return result;
 }
 
 // Determines whether a hand is a straight or not, returning
@@ -238,6 +271,7 @@ function getStraightHighCard(hand, options) {
   let i;
   let curRun = 0;
   let wildRun = hand.wildCards;
+  const result = {};
 
   for (i = 0; i < hand.rank.length; i++) {
     if (hand.rank[i]) {
@@ -268,53 +302,114 @@ function getStraightHighCard(hand, options) {
     hiCard = hand.rank.length;
   }
 
-  // Did we get as many as we needed in a row?
-  return hiCard;
+  result.hiCard = hiCard;
+  if (hiCard && options.getDetails) {
+    // Return the details of the straight - start with wild
+    const cards = [];
+    getWildCards(cards, hand, options);
+
+    // Now, let's look thru each non-wild card and see if it's
+    // in scope for the definition of this straight
+    hand.cards.map((card) => {
+      const rank = getRankAndSuit(card).rank - 1;
+      if ((cards.length < options.cardsToEvaluate)
+          && (options.wildCards.indexOf(card.toUpperCase()) < 0)
+          && (rank <= hiCard)
+          && (rank >= hiCard - options.cardsToEvaluate)) {
+        cards.push(card);
+      }
+    });
+
+    result.cards = cards;
+  }
+
+  return result;
 }
 
 // Returns the maximum number of like cards (pair, three of a kind, etc)
 function getMaxLikeCards(hand, options) {
   let maxLike = Math.max.apply(null, hand.rank) + hand.wildCards;
+  const result = {};
 
   if (maxLike > hand.cardsToEvaluate) {
     maxLike = hand.cardsToEvaluate;
   }
+  if (options.getDetails) {
+    // Return what the matched cards are as well
+    const cards = [];
 
-  return maxLike;
+    // We would suggest starting with wild cards
+    getWildCards(cards, hand, options);
+    getLikeCards(cards, hand, options, Math.max.apply(null, hand.rank));
+    result.cards = cards;
+  }
+
+  result.maxLike = maxLike;
+  return result;
 }
 
-function isHandFullHouse(hand, options) {
+function getFullHouse(hand, options) {
+  const result = {isFullHouse: false};
+
   // You need 5 cards to evaluate to make a full house
-  if (hand.cardsToEvaluate < 5) {
-    return false;
+  if (options.cardsToEvaluate >= 5) {
+    if (hand.rank.indexOf(3) >= 0) {
+      // OK, we have three of a kind (natural) - now look for a pair
+      // No need to check for wild cards as they would have 4-of-a-kind instead
+      if (hand.rank.indexOf(2) >= 0) {
+        // Natural full house! Get the specific cards if necessary
+        result.isFullHouse = true;
+        if (options.getDetails) {
+          // Which rank is 3 and which is 2?
+          const cards = [];
+
+          getLikeCards(cards, hand, options, 3);
+          getLikeCards(cards, hand, options, 2);
+          result.cards = cards;
+        }
+      }
+    } else if (hand.wildCards > 0) {
+      // OK, they have wild cards; they can't have three wild cards (else it's 4-of-a-kind)
+      // and they can't have two - that would require a natural pair which would be 4-of-a-kind
+      // So we just need to check for two pairs (natural) - and that's just what getTwoPair does
+      const twoPair = getTwoPair(hand, options);
+      if (twoPair.isTwoPair) {
+        result.isFullHouse = true;
+        if (options.getDetails) {
+          result.cards = twoPair.cards;
+          getWildCards(result.cards, hand, options);
+        }
+      }
+    }
   }
 
-  // OK, we need 3 and 2 - start by checking if we have a three in the array
-  if (hand.rank.indexOf(3) >= 0) {
-    // OK, we have three of a kind (natural) - now look for a pair
-    // No need to check for wild cards as they would have 4-of-a-kind instead
-    if (hand.rank.indexOf(2) >= 0) {
-      // Natural full house!
-      return true;
-    }
-  } else if (hand.wildCards > 0) {
-    // OK, they have wild cards; they can't have three wild cards (else it's 4-of-a-kind)
-    // and they can't have two - that would require a natural paid which would be 4-of-a-kind
-    // So we just need to check for two pairs (natural) - and that's just what isHandTwoPair does
-    if (isHandTwoPair(hand, options)) {
-      return true;
-    }
-  }
-
-  return false;
+  return result;
 }
 
-function isHandTwoPair(hand, options) {
+function getTwoPair(hand, options) {
+  const result = {};
+
   // No need to check for wild cards as
   // any wild cards would make this a better hand than just two pair
-  return (hand.rank.reduce((sum, value) => {
+  result.isTwoPair = (hand.rank.reduce((sum, value) => {
     return (value === 2) ? (sum + 1) : sum;
   }, 0) >= 2);
+
+  if (result.isTwoPair && options.getDetails) {
+    // Now we have to find the cards that are two pair
+    const handCopy = JSON.parse(JSON.stringify(hand));
+    const cards = [];
+
+    // First pair
+    getLikeCards(cards, handCopy, options, 2);
+
+    // Now 0 these out from handCopy
+    handCopy.rank[getRankAndSuit(cards[0]).rank - 1] = 0;
+    getLikeCards(cards, handCopy, options, 2);
+    result.cards = cards;
+  }
+
+  return result;
 }
 
 // Function assumes there is a single pair
@@ -335,4 +430,56 @@ function getPairCard(hand) {
 
   // This shouldn't happen
   return undefined;
+}
+
+function getLikeCards(cards, hand, options, likeRank) {
+  let matchRank;
+  let i;
+  for (i = 0; i < hand.rank.length; i++) {
+    if (hand.rank[i] === likeRank) {
+      // This is the high suit
+      matchRank = i;
+    }
+  }
+
+  // Now find cards that match this rank (and aren't wild)
+  hand.cards.map((card) => {
+    if ((cards.length < options.cardsToEvaluate)
+        && (options.wildCards.indexOf(card.toUpperCase()) < 0)
+        && ((getRankAndSuit(card).rank - 1) === matchRank)) {
+      cards.push(card);
+    }
+  });
+}
+
+function getLikeSuit(cards, hand, options, likeSuit) {
+  // Now go thru and see which cards from the suit match
+  let matchSuit;
+  let i;
+  for (i = 0; i < hand.suits.length; i++) {
+    if (hand.suits[i] === likeSuit) {
+      // This is the high suit
+      matchSuit = i;
+    }
+  }
+
+  // Now find cards that match this suit (and aren't wild)
+  hand.cards.map((card) => {
+    if ((cards.length < options.cardsToEvaluate)
+        && (options.wildCards.indexOf(card.toUpperCase()) < 0)
+        && (getRankAndSuit(card).suit === matchSuit)) {
+      cards.push(card);
+    }
+  });
+}
+
+function getWildCards(cards, hand, options) {
+  // Return the details of the straight - start with wild
+  hand.cards.map((card) => {
+    if (options.wildCards.indexOf(card.toUpperCase()) >= 0) {
+      if (cards.length < options.cardsToEvaluate) {
+        cards.push(card);
+      }
+    }
+  });
 }
