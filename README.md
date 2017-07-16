@@ -3,13 +3,14 @@ Evaluates a poker hand - can include options such as wild cards or whether Ace c
 
 # Usage
 
-The exposed function from this library is `evaluateHand` which will return a string saying what the hand represents
+The exposed functions from this library are `evaluateHand` which returns a string saying what the hand represents and `evaluateAndFindCards.` which will return a string and the cards from the input array which form this hand.
 
 ```
 evaluateHand(cards options)
+evaluateAndFindCards(cards options)
 ```
 
-The arguments to  `evaluateHand` are:
+The arguments to these functions are:
 
  * cards - an array of strings representing the hand.  Strings should be a 2 or 3 character string representing the rank 
             and suit (for example, '10S' for 10 of spades or 'QD' for Queen of diamonds).  The string can also be
@@ -51,3 +52,14 @@ The return value is one of the following strings, in order from highest-ranked t
  * `2pair`
  * `pair` (`minpair` if minpair option specified and pair meets or exceeds this)
  * `nothing`
+
+For `evaluateHand` this string is the return value.  For `evaluateAndFindCards,` the return value is a structure with two fields:
+
+```
+{
+  match,      // One of the above mentioned strings
+  cards:[],   // The cards from the input array that compose this hand
+}
+```
+
+Note that cards will always be the best set of cards which make up this hand.  For exapmle, if given a 7-card hand with all spades, it will return the 5 highest-ranked spades in the hand.

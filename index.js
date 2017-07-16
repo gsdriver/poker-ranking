@@ -8,80 +8,89 @@ const ranks = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K',
 module.exports = {
   // Evaluate a hand
   evaluateHand: function(cards, options) {
+    return evaluateInternal(cards, mapOptions(cards, options));
+  },
+  evaluateAndFindCards: function(cards, options) {
     const playerOptions = mapOptions(cards, options);
-    const hand = createHandArray(cards, playerOptions);
-    let matchedCards;
-    let match;
+    playerOptions.getDetails = true;
+    return evaluateInternal(cards, playerOptions);
+  },
+};
 
-    if (!hand) {
-      match = 'error';
+function evaluateInternal(cards, playerOptions) {
+  const hand = createHandArray(cards, playerOptions);
+  let matchedCards;
+  let match;
+
+  if (!hand) {
+    match = 'error';
+  } else {
+    const flush = isHandFlush(hand, playerOptions);
+    const straightHiCard = getStraightHighCard(hand, playerOptions);
+    const maxLikeCards = getMaxLikeCards(hand, playerOptions);
+
+    // OK, let's see what we got - highest hand, 5-of-a-kind (with wild cards)
+    if (maxLikeCards.maxLike === 5) {
+      match = '5ofakind';
+      matchedCards = maxLikeCards.cards;
+    } else if (flush.isFlush && (straightHiCard.hiCard === 14) && (playerOptions.dontAllow.indexOf('royalflush') < 0)) {
+      match = 'royalflush';
+      matchedCards = flush.cards;
+    } else if (flush.isFlush && (straightHiCard.hiCard > 0) && (playerOptions.dontAllow.indexOf('straightflush') < 0)) {
+      match = 'straightflush';
+      matchedCards = flush.cards;
+    } else if ((maxLikeCards.maxLike === 4) && (playerOptions.dontAllow.indexOf('4ofakind') < 0)) {
+      match = '4ofakind';
+      matchedCards = maxLikeCards.cards;
     } else {
-      const flush = isHandFlush(hand, playerOptions);
-      const straightHiCard = getStraightHighCard(hand, playerOptions);
-      const maxLikeCards = getMaxLikeCards(hand, playerOptions);
-
-      // OK, let's see what we got - highest hand, 5-of-a-kind (with wild cards)
-      if (maxLikeCards.maxLike === 5) {
-        match = '5ofakind';
-        matchedCards = maxLikeCards.cards;
-      } else if (flush.isFlush && (straightHiCard.hiCard === 14) && (playerOptions.dontAllow.indexOf('royalflush') < 0)) {
-        match = 'royalflush';
+      const fullHouse = getFullHouse(hand, playerOptions);
+      if (fullHouse.isFullHouse && (playerOptions.dontAllow.indexOf('fullhouse') < 0)) {
+        match = 'fullhouse';
+        matchedCards = fullHouse.cards;
+      } else if (flush.isFlush && (playerOptions.dontAllow.indexOf('flush') < 0)) {
+        match = 'flush';
         matchedCards = flush.cards;
-      } else if (flush.isFlush && (straightHiCard.hiCard > 0) && (playerOptions.dontAllow.indexOf('straightflush') < 0)) {
-        match = 'straightflush';
-        matchedCards = flush.cards;
-      } else if ((maxLikeCards.maxLike === 4) && (playerOptions.dontAllow.indexOf('4ofakind') < 0)) {
-        match = '4ofakind';
+      } else if ((straightHiCard.hiCard > 0) && (playerOptions.dontAllow.indexOf('straight') < 0)) {
+        match = 'straight';
+        matchedCards = straightHiCard.cards;
+      } else if ((maxLikeCards.maxLike === 3) && (playerOptions.dontAllow.indexOf('3ofakind') < 0)) {
+        match = '3ofakind';
         matchedCards = maxLikeCards.cards;
       } else {
-        const fullHouse = getFullHouse(hand, playerOptions);
-        if (fullHouse.isFullHouse && (playerOptions.dontAllow.indexOf('fullhouse') < 0)) {
-          match = 'fullhouse';
-          matchedCards = fullHouse.cards;
-        } else if (flush.isFlush && (playerOptions.dontAllow.indexOf('flush') < 0)) {
-          match = 'flush';
-          matchedCards = flush.cards;
-        } else if ((straightHiCard.hiCard > 0) && (playerOptions.dontAllow.indexOf('straight') < 0)) {
-          match = 'straight';
-          matchedCards = straightHiCard.cards;
-        } else if ((maxLikeCards.maxLike === 3) && (playerOptions.dontAllow.indexOf('3ofakind') < 0)) {
-          match = '3ofakind';
+        const twoPair = getTwoPair(hand, playerOptions);
+        if (twoPair.isTwoPair && (playerOptions.dontAllow.indexOf('2pair') < 0)) {
+          match = '2pair';
+          matchedCards = twoPair.cards;
+        } else if ((maxLikeCards.maxLike === 2) && (playerOptions.dontAllow.indexOf('pair') < 0)) {
+          // Was a minimum pair set?
+          if (playerOptions.minPair) {
+            // What is the pair?
+            const pairCard = getPairCard(hand);
+            if (pairCard >= (ranks.indexOf(playerOptions.minPair) + 1)) {
+              match = 'minpair';
+            }
+          }
+
+          if (!match) {
+            match = 'pair';
+          }
           matchedCards = maxLikeCards.cards;
         } else {
-          const twoPair = getTwoPair(hand, playerOptions);
-          if (twoPair.isTwoPair && (playerOptions.dontAllow.indexOf('2pair') < 0)) {
-            match = '2pair';
-            matchedCards = twoPair.cards;
-          } else if ((maxLikeCards.maxLike === 2) && (playerOptions.dontAllow.indexOf('pair') < 0)) {
-            // Was a minimum pair set?
-            if (playerOptions.minPair) {
-              // What is the pair?
-              const pairCard = getPairCard(hand);
-              if (pairCard >= (ranks.indexOf(playerOptions.minPair) + 1)) {
-                match = 'minpair';
-              }
-            }
-
-            if (!match) {
-              match = 'pair';
-            }
-            matchedCards = maxLikeCards.cards;
-          } else {
-            // Nothing - matched cards remains undefined
-            match = 'nothing';
-          }
+          // Nothing - matched cards remains undefined
+          match = 'nothing';
+          matchedCards = [];
         }
       }
     }
+  }
 
-    if (playerOptions.getDetails) {
-      // If a callback is provided, return the matched cards
-      return {match: match, cards: matchedCards};
-    } else {
-      return match;
-    }
-  },
-};
+  if (playerOptions.getDetails) {
+    // If a callback is provided, return the matched cards
+    return {match: match, cards: matchedCards};
+  } else {
+    return match;
+  }
+}
 
 // Maps the options (if any) to fill in default values
 function mapOptions(cards, options) {
@@ -99,9 +108,6 @@ function mapOptions(cards, options) {
     }
     if (options.hasOwnProperty('dontAllow')) {
       playerOptions.dontAllow = options.dontAllow;
-    }
-    if (options.hasOwnProperty('getDetails')) {
-      playerOptions.getDetails = options.getDetails;
     }
     if (options.hasOwnProperty('minPair')) {
       // Only keep if it's valid
@@ -147,7 +153,7 @@ function mapOptions(cards, options) {
   return playerOptions;
 }
 
-// Given a string (e.g. '10' or 'J'), this function returns the rank, which 
+// Given a string (e.g. '10' or 'J'), this function returns the rank, which
 // is a number from 1-14.  A return value of 0 indicates an error
 function getRank(rankString) {
   let rank;
