@@ -235,7 +235,9 @@ function createHandArray(cards, options) {
       result.rank[card.rank - 1]++;
       if ((card.rank == 14) && options.aceCanBeLow) {
         // This is an ace - it can also be low
-        result.rank[0]++;
+        // This is only an issue for straight, so don't mark
+        // more than 1 low ace (to avoid it being counted as two pair)
+        result.rank[0] = 1;
       }
     }
   }

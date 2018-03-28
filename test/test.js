@@ -64,10 +64,14 @@ runTest('Bad Input', ['LS', '12S'], null,
         'error', undefined);
 runTest('3-of-a-kind', ['10S', '10H', '2D', '6c', '10C'], null,
         '3ofakind', ['10S', '10H', '10C']);
+runTest('3-of-a-kind', ['AD', 'JD', '8S', 'KD', 'AS'], {aceCanBeLow: true},
+        'pair', ['AD', 'AS']);
 
 // A-5 straight
 runTest('A-5 Low Straight', ['5C', '2d', 'AC', '3S', '4H'], {aceCanBeLow: true},
         'straight', ['5C', '2d', 'AC', '3S', '4H']);
+runTest('A-10 High Straight', ['10C', 'Qd', 'KC', 'AS', 'JH'], null,
+        'straight', ['10C', 'Qd', 'KC', 'AS', 'JH']);
 
 // Four of a kind
 runTest('Four of a kind', ['4C', '5D', '4D', '4H', '4S'], null,
