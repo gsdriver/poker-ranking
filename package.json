@@ -1,6 +1,6 @@
 {
   "name": "poker-ranking",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "provides a rank for a poker hand, potentially including wildcards",
   "main": "index.js",
   "scripts": {
