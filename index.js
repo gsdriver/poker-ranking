@@ -314,17 +314,27 @@ function getStraightHighCard(hand, options) {
   if (hiCard && options.getDetails) {
     // Return the details of the straight - start with wild
     const cards = [];
+    const used = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     getWildCards(cards, hand, options);
 
     // Now, let's look thru each non-wild card and see if it's
     // in scope for the definition of this straight
     hand.cards.map((card) => {
-      const rank = getRankAndSuit(card).rank - 1;
+      let rank = getRankAndSuit(card).rank - 1;
+
+      // Is this an ace-low straight?
+      if ((rank === 13) && (hiCard === options.cardsToEvaluate)) {
+        rank = 0;
+      }
       if ((cards.length < options.cardsToEvaluate)
           && (options.wildCards.indexOf(card.toUpperCase()) < 0)
           && (rank <= hiCard)
-          && (rank >= hiCard - options.cardsToEvaluate)) {
+          && (rank >= hiCard - options.cardsToEvaluate)
+          && (!used[rank])) {
         cards.push(card);
+
+        // Mark this as used so we don't include a duplicate
+        used[rank] = 1;
       }
     });
 

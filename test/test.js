@@ -41,11 +41,15 @@ function runTest(testName, cards, options, expectedResult, expectedCards) {
   const details = lib.evaluateAndFindCards(cards, options);
   let isMatch = true;
   if (expectedCards) {
-    details.cards.map((card) => {
-      if (expectedCards.indexOf(card) == -1) {
-        isMatch = false;
-      }
-    });
+    if (details.cards.length !== expectedCards.length) {
+      isMatch = false;
+    } else {
+      details.cards.map((card) => {
+        if (expectedCards.indexOf(card) == -1) {
+          isMatch = false;
+        }
+      });
+    }
   }
 
   if (isMatch && (details.match == expectedResult)) {
@@ -72,6 +76,8 @@ runTest('A-5 Low Straight', ['5C', '2d', 'AC', '3S', '4H'], {aceCanBeLow: true},
         'straight', ['5C', '2d', 'AC', '3S', '4H']);
 runTest('A-10 High Straight', ['10C', 'Qd', 'KC', 'AS', 'JH'], null,
         'straight', ['10C', 'Qd', 'KC', 'AS', 'JH']);
+runTest('3-5 Three Card Straight', ['3C', '4S', '3D', '5H', 'JH'], {cardsToEvaluate: 3},
+        'straight', ['3C', '4S', '5H']);
 
 // Four of a kind
 runTest('Four of a kind', ['4C', '5D', '4D', '4H', '4S'], null,
@@ -109,7 +115,7 @@ runTest('Ace-high straight, 10s are wild', ['10c', 'As', 'Qd', 'Jc', 'Ks'], {wil
 runTest('Full house, 3s and 4s are wild', ['2C', '2D', '3s', '8c', '8d'], {wildCards: ['3', '4']},
         'fullhouse', ['2C', '2D', '3s', '8c', '8d']);
 runTest('Pair, Kings are wild', ['3d', '9s', '5c', 'Qh', 'Ks'], {wildCards: ['K']},
-        'pair', ['3d', '9s', '5c', 'Qh', 'Ks']);
+        'pair', ['Qh', 'Ks']);
 
 // Min pair tests
 runTest('Jacks or better', ['3d', 'jd', '9S', '2c', '8d', '5c', 'jh'], {minPair: 'j'},
