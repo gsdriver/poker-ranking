@@ -182,11 +182,12 @@ function getRankAndSuit(card) {
     result.rank = 10;
     suitString = card.substring(2, card.length);
   } else if (card.length === 2) {
-    result.rank = getRank(card.substring(0, 1));
-    if (result.rank < 2) {
+    const rank = getRank(card.substring(0, 1));
+    if ((rank === undefined) || (rank < 2)) {
       // Nope, bad input
       return undefined;
     }
+    result.rank = rank;
 
     suitString = card.substring(1, 2);
   } else {

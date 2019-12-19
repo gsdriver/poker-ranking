@@ -41,7 +41,7 @@ function runTest(testName, cards, options, expectedResult, expectedCards) {
   const details = lib.evaluateAndFindCards(cards, options);
   let isMatch = true;
   if (expectedCards) {
-    if (details.cards.length !== expectedCards.length) {
+    if (!details.cards || (details.cards.length !== expectedCards.length)) {
       isMatch = false;
     } else {
       details.cards.map((card) => {
@@ -65,6 +65,8 @@ function runTest(testName, cards, options, expectedResult, expectedCards) {
 runTest('Royal Flush', ['10S', 'js', 'KS', 'qS', 'AS'], null,
         'royalflush', ['10S', 'js', 'KS', 'qS', 'AS']);
 runTest('Bad Input', ['LS', '12S'], null,
+        'error', undefined);
+runTest('Valid and invalid cards', ['6h','6s','5s','Ts','Td'], {wildCards: ['5']}, 
         'error', undefined);
 runTest('3-of-a-kind', ['10S', '10H', '2D', '6c', '10C'], null,
         '3ofakind', ['10S', '10H', '10C']);
@@ -102,6 +104,8 @@ runTest('Junk hand', ['2d', '6S', 'Jh', 'qC', '10h'], null,
         'nothing', []);
 
 // Wild card tests
+runTest('Full house with one wild', ['6h','6s','5s','10S','10d'], {wildCards: ['5']}, 
+        'fullhouse', ['6h','6s','5s','10S','10d']);
 runTest('Four of a kind, twos are wild', ['4C', '2d', '4S', '4h', '10S'], {wildCards: ['2']},
         '4ofakind', ['4C', '2d', '4S', '4h']);
 runTest('Four of a kind, with a joker', ['4C', '2d', '4S', '4h', 'joker'], null,
